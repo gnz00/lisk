@@ -2,13 +2,16 @@
 
 var node = require('../../../node');
 
+var sendTransaction = require('../../../common/complexTransactions').sendTransaction;
+
 var getTransaction = require('../../../common/complexTransactions').getTransaction;
 var getUnconfirmedTransaction = require('../../../common/complexTransactions').getUnconfirmedTransaction;
+var getPendingMultisignature = require('../../../common/complexTransactions').getPendingMultisignature;
 
 var getTransactionPromise = node.Promise.promisify(getTransaction);
 var getUnconfirmedTransactionPromise = node.Promise.promisify(getUnconfirmedTransaction);
+var getPendingMultisignaturePromise = node.Promise.promisify(getPendingMultisignature);
 
-var sendTransaction = require('../../../common/complexTransactions').sendTransaction;
 
 var sentences = {
 	emptyTx : 			'Invalid transaction body - Empty trs passed',
@@ -38,7 +41,7 @@ var tests = [
 	{describe: 'empty object',			args: {}}
 ];
 
-function confirmationPhase (goodTransactions, badTransactions) {
+function confirmationPhase (goodTransactions, badTransactions, pendingMultisignatures) {
 
 	describe('before new block', function () {
 
@@ -50,6 +53,26 @@ function confirmationPhase (goodTransactions, badTransactions) {
 				});
 			});
 		});
+
+		if (pendingMultisignatures) {
+			it('pendingMultisignatures should remain in the pending queue', function () {
+				return node.Promise.map(pendingMultisignatures, function (tx) {
+					return getPendingMultisignaturePromise(tx).then(function (res) {
+						node.expect(res).to.have.property('success').to.be.ok;
+						node.expect(res).to.have.property('transactions').to.be.an('array').to.have.lengthOf(1);
+					});
+				});
+			});
+
+			it('pendingMultisignatures should not be confirmed', function () {
+				return node.Promise.map(pendingMultisignatures, function (tx) {
+					return getTransactionPromise(tx.id).then(function (res) {
+						node.expect(res).to.have.property('success').to.be.not.ok;
+						node.expect(res).to.have.property('error').equal('Transaction not found');
+					});
+				});
+			});
+	  };
 	});
 
 	describe('after new block', function () {
@@ -76,7 +99,7 @@ function confirmationPhase (goodTransactions, badTransactions) {
 			});
 		});
 
-		it('good transactions should be confirmed', function () {
+		it.only('good transactions should be confirmed', function () {
 			return node.Promise.map(goodTransactions, function (tx) {
 				return getTransactionPromise(tx.id).then(function (res) {
 					node.expect(res).to.have.property('success').to.be.ok;
@@ -84,6 +107,26 @@ function confirmationPhase (goodTransactions, badTransactions) {
 				});
 			});
 		});
+
+		if (pendingMultisignatures) {
+			it('pendingMultisignatures should remain in the pending queue', function () {
+				return node.Promise.map(pendingMultisignatures, function (tx) {
+					return getPendingMultisignaturePromise(tx).then(function (res) {
+						node.expect(res).to.have.property('success').to.be.ok;
+						node.expect(res).to.have.property('transactions').to.be.an('array').to.have.lengthOf(1);
+					});
+				});
+			});
+
+			it('pendingMultisignatures should not be confirmed', function () {
+				return node.Promise.map(pendingMultisignatures, function (tx) {
+					return getTransactionPromise(tx.id).then(function (res) {
+						node.expect(res).to.have.property('success').to.be.not.ok;
+						node.expect(res).to.have.property('error').equal('Transaction not found');
+					});
+				});
+			});
+		};
 	});
 };
 
@@ -114,6 +157,9 @@ function invalidAssets (account, option, badTransactions) {
 				break;
 			case 'votes':
 				transaction = node.lisk.vote.createVote(account.password, []);
+				break;
+			case 'multisignature':
+				transaction = node.lisk.multisignature.createMultisignature(account.password, null, ['+' + node.eAccount.publicKey], 1, 2);
 				break;
 		}
 	});
