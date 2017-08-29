@@ -10,47 +10,69 @@ Lisk is a next generation crypto-currency and decentralized application platform
 **NOTE:** The following information is applicable to: **Ubuntu 14.04, 16.04 (LTS) or 16.10 - x86_64**.
 
 ## Prerequisites - In order
+- Mac OSX (with [Homebrew](https://brew.sh/)):
+```bash
+// Tool chain components -- Used for compiling dependencies
+brew install libtool autoconf automake
 
-- Tool chain components -- Used for compiling dependencies
+// Git -- Used for cloning and updating Lisk
+brew install git
 
-  `sudo apt-get install -y python build-essential curl automake autoconf libtool`
+// Node.js -- Node.js serves as the underlying engine for code execution.
+// Install NVM, a Node.js package manager 
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash
 
-- Git (<https://github.com/git/git>) -- Used for cloning and updating Lisk
+// Install Node.js version 8.4.0
+nvm install v8.4.0
 
-  `sudo apt-get install -y git`
+// PostgreSQL - A relational database 
+// Install PostgreSQL (version 9.6)
+brew install postgresql@9.6
+brew services start postgresql
 
-- Node.js (<https://nodejs.org/>) -- Node.js serves as the underlying engine for code execution.
+// Configure Postgres
+createuser --createdb postgres
+createuser lisk_test
+createuser lisk_main
+createdb -O lisk_test lisk_test
+createdb -O lisk_main lisk_main
+psql -d lisk_test -c "alter user "lisk_test" with password 'lisk_test';"
+psql -d lisk_main -c "alter user "lisk_main" with password 'lisk_main';"
+```
+- Ubuntu:
+```bash
+// Create a new lisk user and lisk-users group
+sudo adduser -m -s /bin/bash lisk
+sudo passwd lisk
+sudo addgroup lisk-users
+sudo usermod -aG lisk-users lisk
 
-  System wide via package manager:
+// Tool chain components -- Used for compiling dependencies
+sudo apt-get update
+sudo apt-get install -y python build-essential curl automake autoconf libtool git
 
-  ```
-  curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-  sudo apt-get install -y nodejs
-  ```
+// Node.js -- Node.js serves as the underlying engine for code execution.
+// Install NVM, a Node.js package manager  
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash
 
-  Locally using [nvm](https://github.com/creationix/nvm):
+// Install Node.js version 8.4.0
+nvm install v8.4.0
 
-  ```
-  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash
-  nvm install v6.10.1
-  ```
+// PostgreSQL - A relational database 
+// Install PostgreSQL (version 9.6)
+sudo apt-get install postgresql postgresql-contrib
+sudo -u postgres /etc/init.d/postgresql start
 
-- Install PostgreSQL (version 9.6.2):
-
-  ```
-  curl -sL "https://downloads.lisk.io/scripts/setup_postgresql.Linux" | bash -
-  sudo -u postgres createuser --createdb $USER
-  createdb lisk_test
-  createdb lisk_main
-  sudo -u postgres psql -d lisk_test -c "alter user "$USER" with password 'password';"
-  sudo -u postgres psql -d lisk_main -c "alter user "$USER" with password 'password';"
-  ```
-
+// Configure Postgres
+sudo -u postgres createuser --createdb postgres
+sudo -u postgres createuser lisk_test
+sudo -u postgres createuser lisk_main
+sudo -u postgres createdb lisk_test lisk_test
+sudo -u postgres createdb lisk_main lisk_main
+sudo -u postgres psql -d lisk_test -c "alter user "lisk_test" with password 'lisk_test'"
+sudo -u postgres psql -d lisk_main -c "alter user "lisk_main" with password 'lisk_main'"
+```
   **NOTE:** Database user requires privileges to `CREATE EXTENSION pgcrypto`.
-
-- Bower (<http://bower.io/>) -- Bower helps to install required JavaScript dependencies.
-
-  `npm install -g bower`
 
 - Grunt.js (<http://gruntjs.com/>) -- Grunt is used to compile the frontend code and serves other functions.
 
